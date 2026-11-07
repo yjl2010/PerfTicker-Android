@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'studio.qiusui.perfticker'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "studio.qiusui.perfticker"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0-android"
+    }
+
+    signingConfigs {
+        release {
+            // CI 传入绝对路径；缺省时指向仓库内的占位文件，仅用于本地 assembleDebug 之外的场景
+            def ks = System.getenv("PT_KEYSTORE")
+            if (ks == null || ks.length() == 0) {
+                ks = "keystore/perfticker.jks"
+            }
+            storeFile file(ks)
+            storePassword System.getenv("PT_STORE_PASS") ?: "perfticker"
+            keyAlias System.getenv("PT_KEY_ALIAS") ?: "perfticker"
+            keyPassword System.getenv("PT_KEY_PASS") ?: "perfticker"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+    }
+
+    compileOptions {
+        encoding "UTF-8"
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+// 无第三方依赖：纯 framework 实现，AndroidX 也不需要
+dependencies {
+}
