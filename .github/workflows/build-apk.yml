@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
 
     steps:
@@ -20,12 +20,28 @@ jobs:
           java-version: '17'
 
       - name: Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "SDK dir = $SDK"
+          ls "$SDK" || true
+          SDKMGR="$(find "$SDK" -name sdkmanager -type f 2>/dev/null | head -n 1)"
+          if [ -z "$SDKMGR" ]; then
+            echo "sdkmanager not found, downloading cmdline-tools ..."
+            curl -fsSL -o "$RUNNER_TEMP/clt.zip" https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q "$RUNNER_TEMP/clt.zip" -d "$RUNNER_TEMP/clt"
+            mkdir -p "$SDK/cmdline-tools/latest"
+            mv "$RUNNER_TEMP/clt/cmdline-tools/"* "$SDK/cmdline-tools/latest/"
+            SDKMGR="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          fi
+          echo "sdkmanager = $SDKMGR"
+          echo "SDKMGR=$SDKMGR" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
 
       - name: Install SDK components
         run: |
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
-          yes | sdkmanager --licenses > /dev/null || true
+          yes | "$SDKMGR" --licenses > /dev/null || true
+          "$SDKMGR" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Install Gradle 8.9
         run: |
