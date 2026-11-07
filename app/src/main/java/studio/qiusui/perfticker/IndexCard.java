@@ -54,7 +54,7 @@ final class IndexCard extends View {
         ticker = t;
     }
 
-    void setSelected(boolean s) {
+    public void setSelected(boolean s) {
         selected = s;
         invalidate();
     }
